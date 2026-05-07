@@ -40,6 +40,12 @@ mkdir /mnt/boot
 mount /dev/sda1 /mnt/boot
 ```
 
+### 他のパーティションも必要に応じてマウントしておく
+```bash
+mkdir /mnt/data
+mount /dev/sda3 /mnt/data
+```
+
 ## サーバーのミラー指定
 日本のミラーを取得し`/etc/pacman.d/mirrorlist`へ保存。適宜編集しておく。
 ```bash
@@ -48,7 +54,7 @@ reflector --sort rate --country jp --latest 10 --save /etc/pacman.d/mirrorlist
 
 ## ベースのインストール
 ```bash
-pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion vim nano sudo
+pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion vim sudo ntfs-3g
 ```
 |                 |                                                          |
 | --------------- | -------------------------------------------------------- |
@@ -58,8 +64,14 @@ pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion 
 | linux-firmware  | 必須。ファームウェア関連                                 |
 | sof-firmware    | 必須。サウンド関連                                       |
 | bash-completion | 便利。bash補完                                           |
+| vim             | テキストエディタ                                         |
+| sudo            | ユーザー権限の管理                                       |
+| ntfs-3g         | NTFSファイルシステムのサポート                           |
+
 
 ### `linux-firmware` について
+`linux-firmware`は様々なハードウェアのファームウェアをまとめたパッケージ。<br>
+`linux-firmware-*`で個別に必要なものだけをインストールすることもできる。
 |                        |                                                |
 | ---------------------- | ---------------------------------------------- |
 | linux-firmware-intel   | Intel 製品用 (内蔵GPU・無線LAN・Bluetooth等々) |
@@ -69,6 +81,7 @@ pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion 
 | linux-firmware-realtek | Realtek の無線LAN                              |
 
 ## fstabの作成
+マウントしたパーティションを`/etc/fstab`に書き込む。
 ```bash
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
@@ -94,9 +107,10 @@ echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
 
 ## タイムゾーン設定
-表示に従って設定。
+日本時間に設定。
 ```bash
-tzselect
+ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
+hwclock --systohc
 ```
 
 ## キーマップ設定
@@ -185,9 +199,13 @@ pacman -Syu
 ```
 
 ## yayのインストール
+gitとgoをインストール。
 ```bash
 cd ~
-pacman -S git
+pacman -S git go
+```
+
+```bash
 git clone https://aur.archlinux.org/yay.git
 cd yay
 makepkg -si
