@@ -68,7 +68,6 @@ reflector --sort rate --country jp --latest 10 --save /etc/pacman.d/mirrorlist
 
 ## ベースのインストール
 `linux-firmware`は様々なハードウェアのファームウェアをまとめたパッケージ。<br>
-`linux-firmware-*`で個別に必要なものだけをインストールすると、容量を節約できる。
 ```bash
 pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion vim sudo ntfs-3g
 ```
@@ -83,15 +82,6 @@ pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion 
 | vim             | テキストエディタ                                         |
 | sudo            | ユーザー権限の管理                                       |
 | ntfs-3g         | NTFSファイルシステムのサポート                           |
-
-#### `linux-firmware` について
-|                        |                                                |
-| ---------------------- | ---------------------------------------------- |
-| linux-firmware-intel   | Intel 製品用 (内蔵GPU・無線LAN・Bluetooth等々) |
-| linux-firmware-amdgpu  | AMD GPU                                        |
-| linux-firmware-nvidia  | NVIDIA GPU                                     |
-| linux-firmware-radeon  | ATI Radeon GPU                                 |
-| linux-firmware-realtek | Realtek の無線LAN                              |
 
 ## マイクロコードとグラフィックドライバのインストール
 `pacstrap`の段階で必要なものをインストールする。
@@ -109,6 +99,12 @@ pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion 
 | vulkan-intel / vulkan-radeon | Vulkan対応。ゲームやエンコードに効く |
 | intel-media-driver | IntelのVAAPI（ハードウェアデコード） |
 | libva-mesa-driver | AMDのVAAPI（ハードウェアデコード） |
+| nvidia | NVIDIAのプロプライエタリドライバ |
+
+選び方
+- Intel内蔵: `mesa` + `vulkan-intel` + `intel-media-driver`
+- AMD: `mesa` + `vulkan-radeon` + `libva-mesa-driver`
+- NVIDIA: `nvidia`
 
 ## fstabの作成
 マウントしたパーティションを`/etc/fstab`に書き込む。
@@ -243,9 +239,27 @@ cd ..
 rm -r yay
 ```
 
+# 日本語関係
+## フォント
+```bash
+pacman -S  noto-fonts-cjk noto-fonts-emoji ttf-jetbrains-mono-nerd
+```
+## 日本語入力
+```bash
+sudo pacman -S fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool
+vim /etc/environment
+```
+`/etc/environment`に以下を追加。
+```
+XMODIFIERS=@im=fcitx
+```
+
 おわり。
 
 ---
+
+# 追加のセットアップ (必要に応じて)
+[02_setup.md](02_setup.md)を参照。
 
 # 参考
 山田 ハヤオさん
