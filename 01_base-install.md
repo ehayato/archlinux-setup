@@ -20,22 +20,36 @@ timedatectl set-ntp true
 ```
 
 ## パーティショニング
-Windowsのディスク管理からやっておく。
+Windowsのディスク管理からやっておくと楽。
 
-パーティションの確認
+```md
+パーティション構成例（デュアルブート）
+
+| パーティション | 用途               | FS    |
+| -------------- | ------------------ | ----- |
+| /dev/sda1      | EFI（Windows共用） | FAT32 |
+| /dev/sda2      | Windows            | NTFS  |
+| /dev/sda3      | Arch Linux /       | ext4  |
+| /dev/sda4      | データ共有         | NTFS  |
+
+⚠️ EFIパーティションは絶対にフォーマットしないこと！
+```
+(上記の構成に従ってパーティションを作成している前提で話を進める)
+
+## パーティションの確認
 ```bash
 lsblk
 ```
 
 ## フォーマット
 ```bash
-mkfs.ext4 /dev/sdax
+mkfs.ext4 /dev/sda3
 ```
 
 ## マウント
 インストール先を指定する。
 ```bash
-mount /dev/sda2 /mnt
+mount /dev/sda3 /mnt
 mkdir /mnt/boot
 mount /dev/sda1 /mnt/boot
 ```
@@ -43,7 +57,7 @@ mount /dev/sda1 /mnt/boot
 ### 他のパーティションも必要に応じてマウントしておく
 ```bash
 mkdir /mnt/data
-mount /dev/sda3 /mnt/data
+mount /dev/sda4 /mnt/data
 ```
 
 ## サーバーのミラー指定
@@ -53,6 +67,8 @@ reflector --sort rate --country jp --latest 10 --save /etc/pacman.d/mirrorlist
 ```
 
 ## ベースのインストール
+`linux-firmware`は様々なハードウェアのファームウェアをまとめたパッケージ。<br>
+`linux-firmware-*`で個別に必要なものだけをインストールすると、容量を節約できる。
 ```bash
 pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion vim sudo ntfs-3g
 ```
@@ -61,17 +77,14 @@ pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion 
 | base            | 必須。ArchLinuxのベース                                  |
 | base-devel      | あると便利。開発ツール一式                               |
 | linux           | 必須。標準カーネル。他に`linux-lts`と`linux-zen`がある。 |
-| linux-firmware  | 必須。ファームウェア関連                                 |
+| linux-firmware  | 必須。ファームウェア関連。                               |
 | sof-firmware    | 必須。サウンド関連                                       |
 | bash-completion | 便利。bash補完                                           |
 | vim             | テキストエディタ                                         |
 | sudo            | ユーザー権限の管理                                       |
 | ntfs-3g         | NTFSファイルシステムのサポート                           |
 
-
-### `linux-firmware` について
-`linux-firmware`は様々なハードウェアのファームウェアをまとめたパッケージ。<br>
-`linux-firmware-*`で個別に必要なものだけをインストールすることもできる。
+#### `linux-firmware` について
 |                        |                                                |
 | ---------------------- | ---------------------------------------------- |
 | linux-firmware-intel   | Intel 製品用 (内蔵GPU・無線LAN・Bluetooth等々) |
@@ -79,6 +92,23 @@ pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion 
 | linux-firmware-nvidia  | NVIDIA GPU                                     |
 | linux-firmware-radeon  | ATI Radeon GPU                                 |
 | linux-firmware-realtek | Realtek の無線LAN                              |
+
+## マイクロコードとグラフィックドライバのインストール
+`pacstrap`の段階で必要なものをインストールする。
+
+#### マイクロコード
+| | |
+| - | - |
+| intel-ucode | Intel CPUのマイクロコードアップデート |
+| amd-ucode   | AMD CPUのマイクロコードアップデート   |
+
+#### グラフィックドライバ
+| | |
+| - | - |
+| mesa | OpenGL実装。Intel/AMD共通で必須 |
+| vulkan-intel / vulkan-radeon | Vulkan対応。ゲームやエンコードに効く |
+| intel-media-driver | IntelのVAAPI（ハードウェアデコード） |
+| libva-mesa-driver | AMDのVAAPI（ハードウェアデコード） |
 
 ## fstabの作成
 マウントしたパーティションを`/etc/fstab`に書き込む。
@@ -110,7 +140,6 @@ echo LANG=en_US.UTF-8 > /etc/locale.conf
 日本時間に設定。
 ```bash
 ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-hwclock --systohc
 ```
 
 ## キーマップ設定
@@ -158,6 +187,8 @@ grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=hogehoge
 vim /etc/default/grub
 ```
 コメントアウト：`GRUB_CMDLINE_LINUX_DEFAULT="なんたら"`<br>
+
+Windowsを認識させるため。<br>
 アンコメント：`GRUB_DISABLE_OS_PROBER=false`
 
 保存したら、以下を実行。
@@ -202,18 +233,19 @@ pacman -Syu
 gitとgoをインストール。
 ```bash
 cd ~
-pacman -S git go
+pacman -S --needed git base-devel
 ```
 
 ```bash
 git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si
+cd yay && makepkg -si
 cd ..
 rm -r yay
 ```
 
 おわり。
+
+---
 
 # 参考
 山田 ハヤオさん
