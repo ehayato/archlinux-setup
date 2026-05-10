@@ -103,6 +103,18 @@ StyledPopup {
 }
 ```
 
+# バーの日時幅を調整したい場合
+```
+~/.config/quickshell/ii/modules/ii/bar/BarContent.qml
+```
+```diff
+MouseArea {
+  id: rightCenterGroup
+  anchors.verticalCenter: parent.verticalCenter
+- implicitWidth: root.centerSideModuleWidth
++ implicitWidth: rightCenterGroupContent.implicitWidth + 10 * 2 // 左右に10pxのpaddingを追加
+  implicitHeight: rightCenterGroupContent.implicitHeight
+
 # Night Lightの無効化
 勝手に起動されてウザいので無効化する。
 ```bash
