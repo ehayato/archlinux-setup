@@ -1,7 +1,7 @@
 # やること
 end-4さんの`dots-hyprland`を使ってHyprlandの環境を構築する。
 
-[end_4's dots-hyprland (GitHub)](https://github.com/end-4/dots-hyprland)
+[「end_4's dots-hyprland (GitHub)」](https://github.com/end-4/dots-hyprland)
 
 # インストール
 Arch Linuxのインストールは[01_base-install.md](01_base-install.md)を参照。<br>

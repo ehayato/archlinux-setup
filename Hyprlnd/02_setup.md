@@ -114,6 +114,7 @@ MouseArea {
 - implicitWidth: root.centerSideModuleWidth
 + implicitWidth: rightCenterGroupContent.implicitWidth + 10 * 2 // 左右に10pxのpaddingを追加
   implicitHeight: rightCenterGroupContent.implicitHeight
+```
 
 # Night Lightの無効化
 勝手に起動されてウザいので無効化する。
@@ -144,6 +145,17 @@ ProtnVPNのインジケーターを設置する。
 Loader {
     ...省略...
 }
+```
+
+# QuickShellのロック画面の日付表記の変更
+> [「end_4's dots-hyprland (GitHub)」](https://github.com/end-4/dots-hyprland)特有の設定？
+```bash
+~/.config/illogical-impulse/config.json
+```
+
+該当する行を確認し、変更する。
+```bash
+cat ~/.config/illogical-impulse/config.json | grep -i date
 ```
 
 # PowerProfileを使いたい場合
