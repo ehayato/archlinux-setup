@@ -56,7 +56,7 @@ yay -S --needed \
     docker docker-compose visual-studio-code-bin \
     proton-vpn-cli proton-pass \
     discord slack-desktop \
-    vlc obs-studio \
+    vlc vlc-plugin-ffmpeg obs-studio \
     kdeconnect  
 ```
 ユーザーをdockerグループに追加
