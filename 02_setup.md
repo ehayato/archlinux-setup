@@ -49,6 +49,47 @@ auth sufficient pam_fprintd.so
 
 登録がおかしくなったら、`sudo fprintd-delete ""`で削除してから再度登録する。
 
+# zsh + zim のインストール
+```bash
+sudo pacman -S zsh fzf
+sudo usermod -s /usr/bin/zsh $USER
+curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh
+```
+
+## zimモジュールの追加
+`~/.zimrc`を編集して、以下のモジュールを追加する。
+```
+zmodule zsh-users/zsh-autosuggestions
+zmodule zsh-users/zsh-syntax-highlighting
+zmodule Aloxaf/fzf-tab
+```
+
+追記後、以下のコマンドでzimを再読み込みする。
+```bash
+zimfw reload
+```
+
+## kitty のシェル設定変更
+`~/.config/kitty/kitty.conf` を編集。
+```
+# shell fish  ← コメントアウト
+shell zsh
+```
+
+## starship の設定
+```bash
+echo 'eval "$(starship init zsh)"' >> ~/.zshrc
+```
+
+プリセットを適用する場合は以下のコマンドで選択できる。
+```bash
+starship preset --list
+starship preset <プリセット名> -o ~/.config/starship.toml
+```
+
+カスタマイズ例(`~/.config/starship.toml`)は、[starship.toml](src/starship.toml)を参照。
+
+
 ## ソフトウェア
 ```bash
 yay -S --needed \
