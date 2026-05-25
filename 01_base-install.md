@@ -1,213 +1,269 @@
-# 目指すところ
-- Windowsとのデュアルブート
+# Arch Linux インストール手順
 
-# インストール
-USBメモリからArchLinuxを起動
+Windows とのデュアルブート構成を前提とした手順。
 
-## キーボードレイアウトの変更
+---
+
+## 事前準備
+
+Windows のディスク管理から、Arch Linux 用のパーティションを切り出しておくと作業が楽。
+
+### パーティション構成例（デュアルブート）
+
+| パーティション | 用途                | FS    |
+| -------------- | ------------------- | ----- |
+| /dev/sda1      | EFI（Windows 共用） | FAT32 |
+| /dev/sda2      | Windows             | NTFS  |
+| /dev/sda3      | Arch Linux `/`      | ext4  |
+| /dev/sda4      | データ共有          | NTFS  |
+
+> ⚠️ EFI パーティションは絶対にフォーマットしないこと。
+
+---
+
+## 1. 起動・初期設定
+
+USB メモリから Arch Linux を起動する。
+
 ```bash
+# キーボードレイアウトの変更
 loadkeys jp106
-```
 
-## インターネット接続
-```bash 
-iwctl station {Device} connect {SSID} 
-```
+# インターネット接続（Wi-Fi）
+iwctl station {Device} connect {SSID}
 
-## 時刻合わせ
-```bash
+# 時刻合わせ
 timedatectl set-ntp true
 ```
 
-## パーティショニング
-Windowsのディスク管理からやっておくと楽。
+---
 
-```md
-パーティション構成例（デュアルブート）
+## 2. パーティショニング
 
-| パーティション | 用途               | FS    |
-| -------------- | ------------------ | ----- |
-| /dev/sda1      | EFI（Windows共用） | FAT32 |
-| /dev/sda2      | Windows            | NTFS  |
-| /dev/sda3      | Arch Linux /       | ext4  |
-| /dev/sda4      | データ共有         | NTFS  |
-
-⚠️ EFIパーティションは絶対にフォーマットしないこと！
-```
-(上記の構成に従ってパーティションを作成している前提で話を進める)
-
-## パーティションの確認
 ```bash
-lsblk
+lsblk  # ディスク名を確認
+gdisk /dev/sda
 ```
 
-## フォーマット
+gdisk の操作手順：
+
+| コマンド | 説明                       |
+| -------- | -------------------------- |
+| `o`      | GPT テーブルを新規作成     |
+| `n`      | パーティションを追加       |
+| `t`      | パーティションタイプを変更 |
+| `w`      | 変更を書き込んで終了       |
+
+### パーティションタイプコード
+
+| 用途  | コード |
+| ----- | ------ |
+| EFI   | `ef00` |
+| Linux | `8300` |
+
+### シングルブートの場合
+
+```
+パーティション 1: +512M、タイプ ef00（EFI）
+パーティション 2: 残り全部、タイプ 8300（/）
+```
+
+### デュアルブートの場合
+
+既存の EFI パーティションをそのまま使用する。新規に Linux 用パーティションのみ作成する。
+
+---
+
+## 3. フォーマットとマウント
+
 ```bash
+# シングルブートの場合は EFI もフォーマット
+mkfs.fat -F32 /dev/sda1
+
+# ルートパーティション
 mkfs.ext4 /dev/sda3
-```
 
-## マウント
-インストール先を指定する。
-```bash
+# マウント
 mount /dev/sda3 /mnt
 mkdir /mnt/boot
 mount /dev/sda1 /mnt/boot
-```
 
-### 他のパーティションも必要に応じてマウントしておく
-```bash
+# データパーティションが必要な場合
 mkdir /mnt/data
 mount /dev/sda4 /mnt/data
 ```
 
-## サーバーのミラー指定
-日本のミラーを取得し`/etc/pacman.d/mirrorlist`へ保存。適宜編集しておく。
+---
+
+## 4. ミラーの設定
+
+日本のミラーを取得して `/etc/pacman.d/mirrorlist` に保存する。
+
 ```bash
 reflector --sort rate --country jp --latest 10 --save /etc/pacman.d/mirrorlist
 ```
 
-## ベースのインストール
-`linux-firmware`は様々なハードウェアのファームウェアをまとめたパッケージ。<br>
+---
+
+## 5. ベースシステムのインストール
+
 ```bash
 pacstrap /mnt base base-devel linux linux-firmware sof-firmware bash-completion vim sudo ntfs-3g
 ```
-|                 |                                                          |
-| --------------- | -------------------------------------------------------- |
-| base            | 必須。ArchLinuxのベース                                  |
-| base-devel      | あると便利。開発ツール一式                               |
-| linux           | 必須。標準カーネル。他に`linux-lts`と`linux-zen`がある。 |
-| linux-firmware  | 必須。ファームウェア関連。                               |
-| sof-firmware    | 必須。サウンド関連                                       |
-| bash-completion | 便利。bash補完                                           |
-| vim             | テキストエディタ                                         |
-| sudo            | ユーザー権限の管理                                       |
-| ntfs-3g         | NTFSファイルシステムのサポート                           |
 
-## マイクロコードとグラフィックドライバのインストール
-`pacstrap`の段階で必要なものをインストールする。
+| パッケージ      | 説明                                           |
+| --------------- | ---------------------------------------------- |
+| base            | Arch Linux のベース                            |
+| base-devel      | 開発ツール一式                                 |
+| linux           | 標準カーネル（他に `linux-lts` / `linux-zen`） |
+| linux-firmware  | ファームウェア関連                             |
+| sof-firmware    | サウンド関連                                   |
+| bash-completion | bash 補完                                      |
+| vim             | テキストエディタ                               |
+| sudo            | ユーザー権限管理                               |
+| ntfs-3g         | NTFS サポート                                  |
 
-#### マイクロコード
-| | |
-| - | - |
-| intel-ucode | Intel CPUのマイクロコードアップデート |
-| amd-ucode   | AMD CPUのマイクロコードアップデート   |
+### マイクロコード
 
-#### グラフィックドライバ
-| | |
-| - | - |
-| mesa | OpenGL実装。Intel/AMD共通で必須 |
-| vulkan-intel / vulkan-radeon | Vulkan対応。ゲームやエンコードに効く |
-| intel-media-driver | IntelのVAAPI（ハードウェアデコード） |
-| libva-mesa-driver | AMDのVAAPI（ハードウェアデコード） |
-| nvidia | NVIDIAのプロプライエタリドライバ |
+CPU メーカーを確認してから対応するパッケージを `pacstrap` に追加する。
 
-選び方
-- Intel内蔵: `mesa` + `vulkan-intel` + `intel-media-driver`
-- AMD: `mesa` + `vulkan-radeon` + `libva-mesa-driver`
-- NVIDIA: `nvidia`
+```bash
+# CPU の確認
+grep -m1 "vendor_id" /proc/cpuinfo
+# GenuineIntel → Intel / AuthenticAMD → AMD
+```
 
-## fstabの作成
-マウントしたパーティションを`/etc/fstab`に書き込む。
+| パッケージ  | 対象      |
+| ----------- | --------- |
+| intel-ucode | Intel CPU |
+| amd-ucode   | AMD CPU   |
+
+### グラフィックドライバ
+
+GPU を確認してから対応するパッケージを選択する。
+
+```bash
+# GPU の確認
+lspci | grep -E "VGA|3D"
+```
+
+| 構成       | パッケージ                                 |
+| ---------- | ------------------------------------------ |
+| Intel 内蔵 | `mesa` `vulkan-intel` `intel-media-driver` |
+| AMD        | `mesa` `vulkan-radeon` `libva-mesa-driver` |
+| NVIDIA     | `nvidia` `nvidia-utils`                    |
+
+- `mesa` : OpenGL 実装。Intel / AMD で必須
+- `vulkan-*` : Vulkan 対応。ゲームやエンコードに効く
+- `intel-media-driver` / `libva-mesa-driver` : VAAPI（ハードウェアデコード）
+- `nvidia-utils` : NVIDIA ユーティリティ・Vulkan サポート
+
+### pacstrap コマンド例（Intel CPU + Intel 内蔵 GPU の場合）
+
+```bash
+pacstrap /mnt intel-ucode mesa vulkan-intel intel-media-driver
+```
+
+---
+
+## 6. fstab の生成
+
 ```bash
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
 
 ---
 
-# システムの設定
-インストールしたシステムに入る。
+## 7. システム設定
+
 ```bash
 arch-chroot /mnt
 ```
 
-## ロケール設定
-`vim /etc/locale.gen`を開いて、`en_US.UTF-8 UTF-8`と`ja_JP.UTF-8 UTF-8`をアンコメントする。
+### ロケール
 
-続けて以下を実行。
 ```bash
+# /etc/locale.gen を開いて以下の行をアンコメント
+# en_US.UTF-8 UTF-8
+# ja_JP.UTF-8 UTF-8
+vim /etc/locale.gen
+
 locale-gen
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
 
-## タイムゾーン設定
-日本時間に設定。
+### タイムゾーン・キーマップ・ホスト名
+
 ```bash
 ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime
-```
-
-## キーマップ設定
-```bash
 echo KEYMAP=jp106 > /etc/vconsole.conf
-```
-
-## ホスト名の設定
-好きなホスト名を設定。
-```bash
 echo hogehoge > /etc/hostname
 ```
 
-## rootのパスワード設定
+### ユーザー設定
+
 ```bash
 passwd root
-```
 
-## 一般ユーザー追加
-```bash
 useradd -m -G wheel hogehoge
 passwd hogehoge
-```
 
-## sudoの設定
-```
+# visudo で %wheel ALL=(ALL:ALL) ALL をアンコメント
 visudo
 ```
-`%wheel ALL=(ALL:ALL) ALL`をアンコメント。
 
-## Swapの設定
-Swapはファイルで作成する。
-ハイバネートしたい場合はSwapを作成しておく。(--sizeはRAMの容量と同じかそれ以上にする)
+---
+
+## 8. Swap の設定
+
+ハイバネートを使用する場合は RAM 容量以上のサイズで作成する。
+
 ```bash
 mkswap -U clear --size 16G --file /swapfile
 swapon /swapfile
 ```
-`/etc/fstab`に以下を追加。
+
+`/etc/fstab` に追記する。
+
 ```
 /swapfile none swap defaults 0 0
 ```
 
-## ハイバネートの設定
-`/etc/mkinitcpio.conf`の`HOOKS`セクションに`resume`を追加する。
+---
+
+## 9. ハイバネートの設定
+
+`/etc/mkinitcpio.conf` の `HOOKS` に `resume` を追加する。
+
 ```
 HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
 ```
-> `resume`は`filesystems`の *後* に必ず配置する。
 
-以下のコマンドで反映させる。
-```
+> `resume` は `filesystems` の **後** に配置すること。
+
+```bash
 mkinitcpio -P
 ```
 
-`/etc/systemd/sleep.conf`に以下を追加。
+`/etc/systemd/sleep.conf` に追記する。
+
 ```
 AllowHibernation=yes
 HibernateDelaySec=3600
 ```
-`3600`は一時間。
 
-## 必要なものをインストール
-```bash
-pacman -S grub efibootmgr os-prober networkmanager
-```
+---
 
-## Grubのファイルをインストール
-`--bootloader-id`は作成するブートローダーの名前。<br>
-指定した名前のディレクトリが`/boot/EFI`に作られる。
+## 10. ブートローダーの設定
+
 ```bash
+pacman -S grub efibootmgr os-prober
+
 grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=hogehoge
 ```
 
-### Grubの設定変更
-UUIDとオフセットを取得して、`resume`パラメータを追加する。
+### resume パラメータの追加
+
 ```bash
 UUID=$(findmnt -no UUID -T /swapfile)
 OFFSET=$(sudo filefrag -v /swapfile | awk 'NR==4{print $4}' | cut -d. -f1)
@@ -215,90 +271,71 @@ OFFSET=$(sudo filefrag -v /swapfile | awk 'NR==4{print $4}' | cut -d. -f1)
 sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"resume=UUID=$UUID resume_offset=$OFFSET\"/" /etc/default/grub
 ```
 
-`/etc/default/grub`を以下のように編集する。
-起動ログを見たいので。
-コメントアウト：`GRUB_CMDLINE_LINUX_DEFAULT="なんたら"`<br>
-さっき追加した`GRUB_CMDLINE_LINUX="resume=UUID= ...省略... "`は触らない。<br>
+`/etc/default/grub` を編集する。
 
-Windowsを認識させるため。<br>
-アンコメント：`GRUB_DISABLE_OS_PROBER=false`
+- `GRUB_CMDLINE_LINUX_DEFAULT="..."` をコメントアウト（起動ログを表示するため）
+- `GRUB_DISABLE_OS_PROBER=false` をアンコメント（Windows を認識させるため）
 
-保存したら、以下を実行。
 ```bash
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ---
 
-インストール作業終了
+## 11. 再起動
 
----
-
-# システムから抜けて再起動
 ```bash
 exit
 umount -R /mnt
 reboot
 ```
 
-# 再起動後
-## インターネットに接続
+---
+
+## 12. 再起動後の設定
+
 ```bash
+# NetworkManager の有効化
 systemctl enable NetworkManager
 systemctl start NetworkManager
-```
-Wi-Fi接続
-```bash
-nmcli device wifi connect {SSID} password {Password}
-```
-or
-```bash
-nmtui
-```
 
-## パッケージ更新
-```bash
+# Wi-Fi 接続
+nmtui
+
+# パッケージ更新
 pacman -Syu
 ```
 
-## yayのインストール
-gitとgoをインストール。
-```bash
-cd ~
-pacman -S --needed git base-devel
-```
+### yay のインストール
 
 ```bash
+pacman -S --needed git base-devel
+
 git clone https://aur.archlinux.org/yay.git
 cd yay && makepkg -si
-cd ..
-rm -r yay
+cd .. && rm -r yay
 ```
 
-# 日本語関係
-## フォント
+---
+
+## 13. 日本語環境
+
 ```bash
-pacman -S  noto-fonts-cjk noto-fonts-emoji ttf-jetbrains-mono-nerd
-```
-## 日本語入力
-```bash
+# フォント
+pacman -S noto-fonts-cjk noto-fonts-emoji ttf-jetbrains-mono-nerd
+
+# 日本語入力
 pacman -S fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool
 ```
-`/etc/environment`に以下を追加。
+
+`/etc/environment` に追記する。
+
 ```
 XMODIFIERS=@im=fcitx
 ```
 
-おわり。
-
 ---
 
-# 追加のセットアップ (必要に応じて)
-[02_setup.md](02_setup.md)を参照。
+## 次のステップ
 
-# 参考
-山田 ハヤオさん
-- [初心者向けのArchLinuxのインストールと初期設定（64bit環境にMBRでインストール）](https://qiita.com/Hayao0819/items/1ab6f2984878978d0c3c)
-
-Azelさん
-- [Arch Linux インストール](https://azelpg.gitlab.io/azsky2/note/archlinux/index.html)
+追加のセットアップは [02_setup.md](02_setup.md) を参照。
