@@ -1,13 +1,16 @@
-# やること
-end-4さんの`dots-hyprland`を使ってHyprlandの環境を構築する。
+# Hyprland インストール手順
 
-[「end_4's dots-hyprland (GitHub)」](https://github.com/end-4/dots-hyprland)
+end-4 氏の [dots-hyprland](https://github.com/end-4/dots-hyprland) を使って Hyprland 環境を構築する手順。
 
-# インストール
-Arch Linuxのインストールは[01_base-install.md](01_base-install.md)を参照。<br>
-インストール後のセットアップは[02_setup.md](02_setup.md)を参照。
+事前に以下を完了しておくこと。
 
-## 必要なもののインストール
+- [01_base-install.md](../01_base-install.md) : Arch Linux のベースインストール
+- [02_setup.md](../02_setup.md) : 追加セットアップ（任意）
+
+---
+
+## 1. インストール
+
 ```bash
 pacman -S --needed git base-devel
 
@@ -15,18 +18,19 @@ git clone https://github.com/end-4/dots-hyprland
 cd dots-hyprland
 ./setup install
 ```
-確認しながら進め、再起動。
 
-## Hyprlandの起動
+確認しながら進め、完了したら再起動する。
+
+---
+
+## 2. Hyprland の起動
+
 ```bash
 start-hyprland
 ```
 
 ---
 
-おわり。
+## 次のステップ
 
----
-
-# 追加のセットアップ (必要に応じて)
-QuickShellやキーバインドの設定は、[02_setup.md](02_setup.md)を参照。
+QuickShell やキーバインドなどの追加設定は [02_setup.md](02_setup.md) を参照。

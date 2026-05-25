@@ -1,39 +1,46 @@
-# 細かいセットアップ（実行しなくても良い）
-[Hyprlandのインストール](01_install.md)が完了した後に行う細かいセットアップ。
+# Hyprland 追加セットアップ
 
-# 指紋ログインの設定
-ベースの[../02_setup.md](../02_setup.md)で指紋センサーの設定を行う。
-`/etc/pam.d/hyprlock`に以下を追加。
+[01_install.md](01_install.md) 完了後の追加設定。必要に応じて実施する。
+
+---
+
+## 指紋ログインの設定
+
+[../../02_setup.md](../02_setup.md) で fprintd の設定を先に行う。
+
+`/etc/pam.d/hyprlock` に追記する。
+
 ```
 auth sufficient pam_fprintd.so
 ```
 
-# 日本語環境
-`fcitx5`の自動起動。
-```bash
-vim ~/.config/hypr/hyprland.conf
-```
-ここに以下を追加。
+---
+
+## 日本語環境
+
+fcitx5 の自動起動を設定する。`~/.config/hypr/hyprland.conf` に追記する。
+
 ```
 exec-once = fcitx5 -d
 ```
 
-日本語キーボードの設定。
-```bash
-~/.config/hypr/hyprland/general.conf
-```
-`input`セクションを編集。
+日本語キーボードの設定。`~/.config/hypr/hyprland/general.conf` の `input` セクションを編集する。
+
 ```
 input {
     kb_layout = jp
-    numlock_by_default = false #NumLockをデフォルトでオフにする
+    numlock_by_default = false
 }
 ```
 
-# ウィンドウルール
-`~/.config/hypr/custom/rules.conf`
+---
+
+## ウィンドウルール
+
+`~/.config/hypr/custom/rules.conf` に追記する。
+
 ```
-# DiscordやSlackをスペシャルワークスペースに配置
+# Discord・Slack をスペシャルワークスペースに配置
 windowrule = match:class discord, workspace special:discord
 windowrule = match:class slack, workspace special:slack
 
@@ -51,37 +58,26 @@ windowrule = match:pin 1, border_color rgb(FFB7C5)
 windowrule = match:pin 1, border_size 2
 ```
 
-`~/.config/hypr/custom/keybinds.conf`
+`~/.config/hypr/custom/keybinds.conf` に追記する。
+
 ```
-# ProtonVPN接続
-bind = Super+Shift, V, exec, bash -c 'result=$(protonvpn connect | grep -oP "[\w ]+(?=\.)" | head -1); notify-send --app-name="ProtonVPN" "ProtonVPN" "$resultサーバーに接続しました。";' # ProtonVPN connect
+# ProtonVPN 接続
+bind = Super+Shift, V, exec, bash -c 'result=$(protonvpn connect | grep -oP "[\w ]+(?=\.)" | head -1); notify-send --app-name="ProtonVPN" "ProtonVPN" "$resultサーバーに接続しました。";'
 
 # スペシャルワークスペースの切り替え
-bind = Super+Shift, D, togglespecialworkspace, discord # Toggle Discord workspace
-bind = Super+Shift, S, togglespecialworkspace, slack # Toggle Slack workspace
+bind = Super+Shift, D, togglespecialworkspace, discord
+bind = Super+Shift, S, togglespecialworkspace, slack
 ```
 
-# バーの日時を編集
-`yyyy/MM/dd (ddd)`の形式に変更する。
-```bash
-~/.config/quickshell/ii/modules/ii/bar
-```
-以下のように編集する。
+---
 
-`ClockWidget.qml`
+## バーの日時表記の変更
+
+`yyyy/MM/dd (ddd)` 形式に変更する。対象ディレクトリは `~/.config/quickshell/ii/modules/ii/bar`。
+
+### ClockWidget.qml
+
 ```diff
-Item {
-    ...省略...
-    RowLayout {
-        ...
-        StyledText {
-            ...
-        }
-
-        StyledText {
-            ...
-        }
-
         StyledText {
             visible: root.showDate
             font.pixelSize: Appearance.font.pixelSize.small
@@ -90,47 +86,46 @@ Item {
         }
 ```
 
-`ClockWidgetPopup.qml`
+### ClockWidgetPopup.qml
+
 ```diff
 StyledPopup {
     id: root
 +   property string formattedDate: Qt.locale("ja_JP").toString(DateTime.clock.date, "yyyy/MM/dd (ddd)")
     property string formattedTime: DateTime.time
-    property string formattedUptime: DateTime.uptime
-    property string todosSection: getUpcomingTodos()
 
-    ...省略...
-}
+    # 以下省略
 ```
 
-# バーの日時幅を調整したい場合
-```
-~/.config/quickshell/ii/modules/ii/bar/BarContent.qml
-```
+---
+
+## バーの日時幅の調整
+
+`~/.config/quickshell/ii/modules/ii/bar/BarContent.qml` を編集する。
+
 ```diff
 MouseArea {
   id: rightCenterGroup
   anchors.verticalCenter: parent.verticalCenter
 - implicitWidth: root.centerSideModuleWidth
-+ implicitWidth: rightCenterGroupContent.implicitWidth + 10 * 2 // 左右に10pxのpaddingを追加
++ implicitWidth: rightCenterGroupContent.implicitWidth + 10 * 2
   implicitHeight: rightCenterGroupContent.implicitHeight
 ```
 
-# Night Lightの無効化
-勝手に起動されてウザいので無効化する。
-```bash
-~/.config/quickshell/ii/services/Hyprsunset.qml
-```
-これを[Hyprsunset.qml](src/Hyprsunset.qml)のように編集する。
+---
 
-# VPNインジケーターの設置
-ProtnVPNのインジケーターを設置する。
-```bash
-~/.config/quickshell/ii/modules/ii/bar
-```
-ここに[VpnIndicator.qml](src/VpnIndicator.qml)を作る。
+## Night Light の無効化
 
-`BarContent.qml`の下の方に追記する。
+`~/.config/quickshell/ii/services/Hyprsunset.qml` を [src/Hyprsunset.qml](src/Hyprsunset.qml) の内容に差し替える。
+
+---
+
+## VPN インジケーターの設置
+
+`~/.config/quickshell/ii/modules/ii/bar` に [src/VpnIndicator.qml](src/VpnIndicator.qml) を配置する。
+
+`BarContent.qml` に追記する。
+
 ```diff
 + // VPN
 + Loader {
@@ -143,27 +138,30 @@ ProtnVPNのインジケーターを設置する。
 
 // Weather
 Loader {
-    ...省略...
-}
 ```
 
-# QuickShellのロック画面の日付表記の変更
-> [「end_4's dots-hyprland (GitHub)」](https://github.com/end-4/dots-hyprland)特有の設定？
-```bash
-~/.config/illogical-impulse/config.json
-```
+---
 
-該当する行を確認し、変更する。
+## ロック画面の日付表記の変更
+
+`~/.config/illogical-impulse/config.json` の該当行を確認して変更する。
+
 ```bash
 cat ~/.config/illogical-impulse/config.json | grep -i date
 ```
 
-# PowerProfileを使いたい場合
+---
+
+## Power Profiles の使用（任意）
+
 ```bash
 yay -S power-profiles-daemon
 ```
 
-# 音が出ない場合
+---
+
+## 音が出ない場合
+
 ```bash
 systemctl --user enable --now pipewire pipewire-pulse wireplumber
 ```
