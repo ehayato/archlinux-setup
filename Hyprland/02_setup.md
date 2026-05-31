@@ -33,6 +33,55 @@ input {
 }
 ```
 
+### fcitx5 環境変数
+
+`~/.config/hypr/custom/env.conf` の以下の行をアンコメントする。
+
+```ini
+env = QT_IM_MODULE, fcitx
+env = XMODIFIERS, @im=fcitx
+env = SDL_IM_MODULE, fcitx
+```
+
+---
+
+## Wayland 環境変数
+
+xdg-desktop-portal や各アプリに Wayland セッション情報を正しく伝えるための設定。
+
+`~/.config/hypr/custom/env.conf` に追記する。
+
+```ini
+env = XDG_CURRENT_DESKTOP, Hyprland
+env = XDG_SESSION_DESKTOP, Hyprland
+env = XDG_SESSION_TYPE, wayland
+```
+
+`~/.config/hypr/custom/execs.conf` に追記する。
+
+```ini
+exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+```
+
+> ⚠️ `hyprctl reload` では反映されない。システム再起動が必要。
+
+---
+
+## xdg-desktop-portal の設定
+
+画面共有などのポータル機能を Hyprland に紐付ける設定。
+
+```bash
+mkdir -p ~/.config/xdg-desktop-portal
+```
+
+`~/.config/xdg-desktop-portal/portals.conf` を作成する。
+
+```ini
+[preferred]
+default=hyprland;gtk
+```
+
 ---
 
 ## ウィンドウルール
@@ -67,6 +116,10 @@ bind = Super+Shift, V, exec, bash -c 'result=$(protonvpn connect | grep -oP "[\w
 # スペシャルワークスペースの切り替え
 bind = Super+Shift, D, togglespecialworkspace, discord
 bind = Super+Shift, S, togglespecialworkspace, slack
+
+# フローティングトグル
+bind = SUPER, space, togglefloating
+
 ```
 
 ---
