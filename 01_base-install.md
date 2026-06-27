@@ -76,15 +76,32 @@ gdisk の操作手順：
 
 ## 3. フォーマットとマウント
 
+> **LUKS暗号化する場合**<br>
+> フォーマットの前にルートパーティション(例: `/dev/sda3` )を暗号化する。
+> ```
+> cryptsetup luksFormat /dev/sda3
+> cryptsetup open /dev/sda3 root
+> ```
+> `/dev/mapper/root` が復号化後の論理ボリュームとして作成される。<br>
+> 以降は `/dev/sda3` の代わりに  `/dev/mapper/root` を使用する。
+
+
 ```bash
 # シングルブートの場合は EFI もフォーマット
 mkfs.fat -F32 /dev/sda1
 
 # ルートパーティション
+#（暗号化をしない場合）
 mkfs.ext4 /dev/sda3
+#（暗号化をする場合）
+mkfs.ext4 /dev/mapper/root
 
 # マウント
+#（暗号化をしない場合）
 mount /dev/sda3 /mnt
+#（暗号化をする場合）
+mount /dev/mapper/root /mnt
+
 mkdir /mnt/boot
 mount /dev/sda1 /mnt/boot
 
@@ -172,6 +189,9 @@ pacstrap /mnt intel-ucode mesa vulkan-intel intel-media-driver
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
 
+> **LUKS暗号化をした場合**<br>
+> 生成されるUUIDは `/dev/mapper/root` （復号化後）のものになる。<br>
+
 ---
 
 ## 7. システム設定
@@ -241,6 +261,17 @@ HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
 
 > `resume` は `filesystems` の **後** に配置すること。
 
+> **LUKS暗号化をした場合**<br>
+> `HOOKS` に `encrypt` を `blok` と `filesystems` の **間** に追加する。
+> ```
+> HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard resume fsck)
+> ```
+> `/etc/crypttab.initramfs` を作成する。UUIDは、暗号化前の物理ボリューム（例： `/dev/sda3` ） のものを指定する。
+> ```
+> UUID=$(blkid -s UUID -o value /dev/sda3)
+> echo "root UUID=$UUID none luks" > /etc/crypttab.initramfs
+> ```
+
 ```bash
 mkinitcpio -P
 ```
@@ -264,12 +295,24 @@ grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=hogehoge
 
 ### resume パラメータの追加
 
+- #### LUKS暗号化をしない場合
 ```bash
 UUID=$(findmnt -no UUID -T /swapfile)
 OFFSET=$(sudo filefrag -v /swapfile | awk 'NR==4{print $4}' | cut -d. -f1)
 
 sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"resume=UUID=$UUID resume_offset=$OFFSET\"/" /etc/default/grub
 ```
+
+- #### LUKS暗号化をする場合
+```bash
+UUID_LUKS=$(blkid -s UUID -o value /dev/sda3)
+UUID_SWAP=$(findmnt -no UUID -T /swapfile)
+OFFSET=$(sudo filefrag -v /swapfile | awk 'NR==4{print $4}' | cut -d. -f1)
+
+sed -i "s/GRUB_CMDLINE_LINUX=\"\"/GRUB_CMDLINE_LINUX=\"cryptdevice=UUID=$UUID_LUKS:root resume=UUID=$UUID_SWAP resume_offset=$OFFSET\"/" /etc/default/grub
+```
+
+### GRUB の設定
 
 `/etc/default/grub` を編集する。
 
@@ -287,6 +330,15 @@ grub-mkconfig -o /boot/grub/grub.cfg
 ```bash
 exit
 umount -R /mnt
+```
+
+> **LUKS暗号化をした場合**<br>
+> 再起動前にロックする。今後、起動後にパスワード入力を求められる。
+> ```bash
+> cryptsetup close root
+> ```
+
+```bash
 reboot
 ```
 
