@@ -256,18 +256,21 @@ swapon /swapfile
 `/etc/mkinitcpio.conf` の `HOOKS` に `resume` を追加する。
 
 ```
-HOOKS=(base udev autodetect modconf block filesystems keyboard resume fsck)
+HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block filesystems resume fsck)
 ```
 
 > `resume` は `filesystems` の **後** に配置すること。
 
-> **LUKS暗号化をした場合**<br>
-> `HOOKS` に `encrypt` を `blok` と `filesystems` の **間** に追加する。
+> **LUKS暗号化する場合**
+> `sd-encrypt` を `block` の後・`filesystems` の前に追加する。
+>
 > ```
-> HOOKS=(base udev autodetect modconf block encrypt filesystems keyboard resume fsck)
+> HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt filesystems resume fsck)
 > ```
-> `/etc/crypttab.initramfs` を作成する。UUIDは、暗号化前の物理ボリューム（例： `/dev/sda3` ） のものを指定する。
-> ```
+>
+> `/etc/crypttab.initramfs` を作成する。UUIDは復号化前の物理ボリューム（例: `/dev/sda3`）のものを指定する。
+>
+> ```bash
 > UUID=$(blkid -s UUID -o value /dev/sda3)
 > echo "root UUID=$UUID none luks" > /etc/crypttab.initramfs
 > ```
@@ -280,6 +283,7 @@ mkinitcpio -P
 
 ```
 AllowHibernation=yes
+AllowSuspendThenHibernate=yes
 HibernateDelaySec=3600
 ```
 

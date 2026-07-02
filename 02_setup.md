@@ -24,6 +24,31 @@ systemctl enable lightdm
 
 ---
 
+## ハイバネート：蓋を閉じたときの動作
+
+`01_base-install.md` の手順でハイバネートを有効化した場合、蓋を閉じたときの動作を環境ごとに設定する。
+
+### Hyprland・CLI の場合
+
+`/etc/systemd/logind.conf` を編集する。
+
+```
+HandleLidSwitch=suspend-then-hibernate
+HandleLidSwitchExternalPower=suspend-then-hibernate
+```
+
+変更後はlogindを再起動する。
+
+```bash
+systemctl restart systemd-logind
+```
+
+### GNOMEやKDEの場合
+
+`logind.conf` の設定はDEが上書きするため、DE側の電源管理設定から「蓋を閉じたとき」の動作を `サスペンド後にハイバネート` に変更する。
+
+---
+
 ## 電源ボタンの割り当て変更
 
 電源ボタンをサスペンドに割り当てる。`/etc/systemd/logind.conf` に追記する。
