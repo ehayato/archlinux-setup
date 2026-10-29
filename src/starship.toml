@@ -1,64 +1,95 @@
-"$schema" = 'https://starship.rs/config-schema.json'
+# Don't print a new line at the start of the prompt
+add_newline = false
+# Pipes ╰─ ╭─
+# Powerline symbols                                     
+# Wedges 🭧🭒 🭣🭧🭓
+# Random noise 🬖🬥🬔🬗
+# Cool stuff 󰜥   
 
+# format = """
+# $directory $fill $git_branch $cmd_duration
+#  $character"""
 format = """
-$username\
-$hostname\
-$directory\
-$git_branch\
-$git_state\
-$git_status\
-$cmd_duration\
-$line_break\
-$python\
+$username$hostname$directory$git_branch$cmd_duration
 $character"""
 
-[username]
-show_always = true
-format = "[$user]($style)@"
-style_user = "bold green"
+[fill]
+symbol = '-'
+style = 'fg:245'
+
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"
+
+# Disable the package module, hiding it from the prompt completely
+[package]
+disabled = true
+
+[git_branch]
+style = "bold purple"
+symbol = ""
+truncation_length = 12
+truncation_symbol = ""
+format = " [$symbol$branch(:$remote_branch)]($style)"
+
+[git_commit]
+commit_hash_length = 4
+tag_symbol = " "
+
+[git_state]
+format = '[\($state( $progress_current of $progress_total)\)]($style) '
+cherry_pick = "[🍒 PICKING](bold red)"
+
+[git_status]
+conflicted = " 🏳 "
+ahead = " 🏎💨 "
+behind = " 😰 "
+diverged = " 😵 "
+untracked = " 🤷 ‍"
+stashed = " 📦 "
+modified = " 📝 "
+staged = '[++\($count\)](green)'
+renamed = " ✍️ "
+deleted = " 🗑 "
 
 [hostname]
 ssh_only = false
-format = "[$hostname]($style):"
 style = "bold green"
-disable = false
+format = "[@$hostname]($style)"
+trim_at = ".companyname.com"
+disabled = false
+
+[line_break]
+disabled = false
+
+[memory_usage]
+disabled = true
+threshold = -1
+symbol = " "
+style = "bold dimmed green"
+
+[time]
+disabled = true
+format = '🕙[\[ $time \]]($style) '
+time_format = "%T"
+
+[username]
+style_user = "bold green"
+style_root = "red bold"
+format = "[$user]($style)"
+disabled = false
+show_always = true
 
 [directory]
-style = "blue"
-truncation_length = 100
+home_symbol = "~"
+read_only = " ro"
+style = "bold blue"
+truncation_length = 0
+truncation_symbol = ".../"
 truncate_to_repo = false
-
-[character]
-success_symbol = "[>](purple)"
-error_symbol = "[>](red)"
-vimcmd_symbol = "[<](green)"
-
-[git_branch]
-format = "on \\([$branch]($style)"
-style = "bright-black"
-
-[git_status]
-format = "[[(*$conflicted$untracked$modified$staged$renamed$deleted)](218)($ahead_behind$stashed)]($style)\\) "
-style = "cyan"
-conflicted = "​"
-untracked = "​"
-modified = "​"
-staged = "​"
-renamed = "​"
-deleted = "​"
-stashed = "≡"
-
-[git_state]
-format = '\([$state( $progress_current/$progress_total)]($style)\) '
-style = "bright-black"
+format = ":[$path]($style)[$read_only]($read_only_style)"
 
 [cmd_duration]
-min_time = 5000
-format = "[$duration]($style) "
+min_time = 0
 style = "yellow"
-
-[python]
-format = "[$virtualenv]($style) "
-style = "bright-black"
-detect_extensions = []
-detect_files = []
+format = " [$duration]($style)"

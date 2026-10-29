@@ -133,7 +133,141 @@ starship preset --list
 starship preset <プリセット名> -o ~/.config/starship.toml
 ```
 
-カスタマイズ例は [src/starship.toml](src/starship.toml) を参照。
+### starship のカスタマイズ
+
+プリセットを使わずに自作の設定を使う場合は、[src/starship.toml](src/starship.toml) を `~/.config/starship.toml` にコピーする。
+
+```bash
+cp src/starship.toml ~/.config/starship.toml
+```
+
+保存すると次のプロンプト表示から反映される（シェルの再起動は不要）。
+
+#### 表示イメージ
+
+git リポジトリ内で 3 秒かかるコマンドを実行した後の表示。
+
+```
+user@host:~/dir main 3s
+> 
+```
+
+| 表示 | 内容 | 色 | 設定するセクション |
+|---|---|---|---|
+| `user` | ユーザー名 | 太字の緑（root のときは赤） | `[username]` |
+| `@host` | ホスト名 | 太字の緑 | `[hostname]` |
+| `:~/dir` | カレントディレクトリ | 太字の青 | `[directory]` |
+| `main` | git ブランチ（git リポジトリ内のみ） | 太字の紫 | `[git_branch]` |
+| `3s` | 直前のコマンドの実行時間 | 黄 | `[cmd_duration]` |
+| `>` | 入力位置（2 行目） | 成功時は緑、失敗時は赤 | `[character]` |
+
+#### 表示順と改行
+
+表示する項目と順番は、ファイル先頭の `format` で決める。`$モジュール名` を書いた順に表示され、途中の改行がそのままプロンプトの改行になる。
+
+```toml
+format = """
+$username$hostname$directory$git_branch$cmd_duration
+$character"""
+```
+
+- `format` に書いていないモジュールは、下のほうにセクションがあっても表示されない
+- 項目を減らしたいときは、ここから `$モジュール名` を消す
+
+#### 各セクションの設定
+
+各モジュールの `format` で、そのモジュールの見た目を決める。`[表示する文字]($style)` と書くと、`[]` の中が `style` の色で表示される。
+
+**ユーザー名・ホスト名**
+
+```toml
+[username]
+style_user = "bold green"
+format = "[$user]($style)"
+show_always = true   # デフォルトでは SSH・root 以外のとき非表示になるため常に表示する
+
+[hostname]
+ssh_only = false     # デフォルトでは SSH 接続時のみ表示されるため常に表示する
+style = "bold green"
+format = "[@$hostname]($style)"
+```
+
+**ディレクトリ**
+
+```toml
+[directory]
+home_symbol = "~"           # ホームディレクトリを ~ で表示する
+truncation_length = 0       # 0 = 階層を省略しない（例: 2 にすると末尾 2 階層だけ表示）
+truncate_to_repo = false    # git リポジトリ内でもリポジトリ名から始めず ~/ から表示する
+style = "bold blue"
+format = ":[$path]($style)[$read_only]($read_only_style)"
+```
+
+> `truncate_to_repo` がデフォルト（`true`）のままだと、git リポジトリ内では `.../dots-hyprland` のように省略される。
+
+**git ブランチ**
+
+```toml
+[git_branch]
+style = "bold purple"
+symbol = ""        # ブランチ名の前のアイコンを付けない
+format = " [$symbol$branch(:$remote_branch)]($style)"
+```
+
+**実行時間**
+
+```toml
+[cmd_duration]
+min_time = 0       # 0 = 常に表示する（ミリ秒。2000 にすると 2 秒以上のときだけ表示）
+style = "yellow"
+format = " [$duration]($style)"
+```
+
+**入力位置の記号**
+
+```toml
+[character]
+success_symbol = "[>](bold green)"   # 直前のコマンドが成功したとき
+error_symbol = "[>](bold red)"       # 直前のコマンドが失敗したとき
+```
+
+#### 色の指定方法
+
+- 色名: `black` `red` `green` `yellow` `blue` `purple` `cyan` `white`
+- 256 色の番号: `fg:245` のように指定する
+- `bold` を付けると太字、`bg:色` で背景色になる
+
+実際にどの色で見えるかは、ターミナル（kitty など）の配色設定によって変わる。
+
+#### tty でも使える理由
+
+tty は Nerd Font のアイコンや絵文字を表示できない。この設定では、`format` に入っているモジュールの表示を ASCII 文字だけにしているため、tty でも文字化けしない。
+
+> `[git_status]` などには絵文字の設定が残っているが、`format` に入れていないので表示されない。`format` に追加する場合は tty で文字化けする。
+
+### VS Code ターミナルのフォント
+
+フォントが `monospace` のままだと starship のアイコンが文字化けする。`~/.config/Code/User/settings.json` を編集する。
+
+```json
+"terminal.integrated.fontFamily": "'JetBrainsMono Nerd Font Mono', 'Noto Sans Mono CJK JP', monospace",
+```
+
+---
+
+## tty の文字化け対策
+
+tty（Linux コンソール）は日本語グリフを表示できないため、tty のときだけ英語ロケールにする。`~/.zshrc` に追記する。
+
+```zsh
+# Linux console (tty) cannot render Japanese glyphs: force English locale there
+if [[ $TERM == linux ]]; then
+  export LANG=en_US.UTF-8
+  export LC_ALL=en_US.UTF-8
+fi
+```
+
+> `starship.toml` に Nerd Font のアイコンを追加すると tty では文字化けするので注意。
 
 ---
 
