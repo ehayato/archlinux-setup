@@ -43,6 +43,68 @@ env = XMODIFIERS, @im=fcitx
 env = SDL_IM_MODULE, fcitx
 ```
 
+### 起動時に IME をオフにする
+
+入力メソッドが Mozc だけだと、IME オフの状態でも Mozc が使われ、ターミナルやロック画面が日本語入力で始まってしまう。先頭に `keyboard-jp`（直接入力）を追加する。
+
+> fcitx5 は終了時に設定を書き戻すため、fcitx5 を止めてから編集する。
+
+```bash
+pkill -x fcitx5
+```
+
+`~/.config/fcitx5/profile` を編集する。
+
+```ini
+[Groups/0]
+Name=Default
+Default Layout=jp
+DefaultIM=mozc
+
+# 1番目: IME オフのときに使う
+[Groups/0/Items/0]
+Name=keyboard-jp
+Layout=
+
+# 2番目: IME オンのときに使う
+[Groups/0/Items/1]
+Name=mozc
+Layout=
+
+[GroupOrder]
+0=Default
+```
+
+### 変換・無変換で IME をオン/オフする
+
+`keyboard-jp` を追加すると、IME オフのときに Mozc にキーが届かなくなり、変換・無変換での切り替えが効かなくなる。fcitx5 側でキーを割り当てる。
+
+`~/.config/fcitx5/config` の該当セクションに追記する。
+
+```ini
+[Hotkey/ActivateKeys]
+0=Hangul_Hanja
+1=Henkan_Mode
+
+[Hotkey/DeactivateKeys]
+0=Hangul_Romaja
+1=Muhenkan
+```
+
+編集後に fcitx5 を起動する。
+
+```bash
+setsid -f fcitx5 -d
+```
+
+| キー | 動作 |
+|---|---|
+| 変換 | IME オン |
+| 無変換 | IME オフ |
+| 半角/全角、`Ctrl+Space` | 切り替え |
+
+> `[Behavior]` の `ShareInputState=No`（デフォルト）のままにすると、IME の状態がウィンドウごとに保持され、新しいウィンドウは必ずオフで始まる。
+
 ---
 
 ## Wayland 環境変数
