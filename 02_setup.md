@@ -24,38 +24,60 @@ systemctl enable lightdm
 
 ---
 
-## ハイバネート：蓋を閉じたときの動作
+## 電源ボタン・蓋を閉じたときの動作
 
-`01_base-install.md` の手順でハイバネートを有効化した場合、蓋を閉じたときの動作を環境ごとに設定する。
+`01_base-install.md` の手順でハイバネートを有効化した場合に、以下の動作にする。
+
+| 操作 | 動作 |
+|---|---|
+| 電源ボタンを押す | ハイバネート（休止） |
+| 電源ボタンを長押し（約 5 秒） | シャットダウン |
+| 蓋を閉じる | サスペンド → 30 分後にハイバネート |
+
+> サスペンドは状態をメモリに保存する（復帰が速いが、待機中も電力を使う）。ハイバネートは状態をディスク（スワップ）に保存して電源を切る（復帰は遅いが、電力を使わない）。`suspend-then-hibernate` は両方を組み合わせたもの。
+
+ハイバネートが使えるか確認する（`"yes"` ならOK）。
+
+```bash
+busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager CanHibernate
+```
 
 ### Hyprland・CLI の場合
 
-`/etc/systemd/logind.conf` を編集する。
+`/etc/systemd/logind.conf` を直接編集せず、ドロップインファイルを作成する（`logind.conf` より優先される）。
 
-```
+`/etc/systemd/logind.conf.d/power-key.conf`
+
+```ini
+[Login]
+HandlePowerKey=hibernate
+HandlePowerKeyLongPress=poweroff
 HandleLidSwitch=suspend-then-hibernate
 HandleLidSwitchExternalPower=suspend-then-hibernate
 ```
 
-変更後はlogindを再起動する。
+サスペンドからハイバネートに移行するまでの時間を設定する。
+
+`/etc/systemd/sleep.conf.d/hibernate-delay.conf`
+
+```ini
+[Sleep]
+HibernateDelaySec=30min
+```
+
+logind に設定を再読み込みさせる。
 
 ```bash
-systemctl restart systemd-logind
+sudo systemctl kill -s HUP systemd-logind
 ```
+
+> `systemctl restart systemd-logind` はログイン中のセッションが落ちることがあるため使わない。
+>
+> 機種によっては、長押しで logind より先にハードウェアの強制電源オフが働く。
 
 ### GNOMEやKDEの場合
 
 `logind.conf` の設定はDEが上書きするため、DE側の電源管理設定から「蓋を閉じたとき」の動作を `サスペンド後にハイバネート` に変更する。
-
----
-
-## 電源ボタンの割り当て変更
-
-電源ボタンをサスペンドに割り当てる。`/etc/systemd/logind.conf` に追記する。
-
-```
-HandlePowerKey=suspend
-```
 
 ---
 
