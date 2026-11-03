@@ -209,7 +209,17 @@ arch-chroot /mnt
 vim /etc/locale.gen
 
 locale-gen
-echo LANG=en_US.UTF-8 > /etc/locale.conf
+```
+
+`/etc/locale.conf` を作成する。表示言語は英語のまま、日付・数値などの書式だけ日本式にする。
+
+```
+LANG=en_US.UTF-8
+LC_TIME=ja_JP.UTF-8
+LC_MONETARY=ja_JP.UTF-8
+LC_PAPER=ja_JP.UTF-8
+LC_MEASUREMENT=ja_JP.UTF-8
+LC_NUMERIC=ja_JP.UTF-8
 ```
 
 ### タイムゾーン・キーマップ・ホスト名
@@ -253,19 +263,19 @@ swapon /swapfile
 
 ## 9. ハイバネートの設定
 
-`/etc/mkinitcpio.conf` の `HOOKS` に `resume` を追加する。
+`/etc/mkinitcpio.conf` の `HOOKS` を確認する。デフォルトの `systemd` フックがハイバネートからの復帰も担当するため、`resume` フックの追加は不要。
 
 ```
-HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block filesystems resume fsck)
+HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block filesystems fsck)
 ```
 
-> `resume` は `filesystems` の **後** に配置すること。
+> `resume` フックは `systemd` フックを使わない構成（`base udev ...`）の場合のみ、`filesystems` の後に追加する。
 
 > **LUKS暗号化する場合**
 > `sd-encrypt` を `block` の後・`filesystems` の前に追加する。
 >
 > ```
-> HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt filesystems resume fsck)
+> HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block sd-encrypt filesystems fsck)
 > ```
 >
 > `/etc/crypttab.initramfs` を作成する。UUIDは復号化前の物理ボリューム（例: `/dev/sda3`）のものを指定する。
@@ -279,13 +289,7 @@ HOOKS=(base systemd autodetect microcode modconf kms keyboard sd-vconsole block 
 mkinitcpio -P
 ```
 
-`/etc/systemd/sleep.conf` に追記する。
-
-```
-AllowHibernation=yes
-AllowSuspendThenHibernate=yes
-HibernateDelaySec=3600
-```
+> ハイバネートはデフォルトで許可されているため、`/etc/systemd/sleep.conf` の編集は不要。サスペンドからハイバネートに移行するまでの時間などは [02_setup.md](02_setup.md) の「電源ボタン・蓋を閉じたときの動作」で設定する。
 
 ---
 

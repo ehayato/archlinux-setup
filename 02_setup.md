@@ -2,6 +2,8 @@
 
 [01_base-install.md](01_base-install.md) 完了後の追加設定。必要に応じて実施する。
 
+> このファイルと [Hyprland/02_setup.md](Hyprland/02_setup.md) の設定は、[setup.sh](setup.sh) でまとめて適用できる。詳しくは [README.md](README.md) を参照。
+
 ---
 
 ## 時刻合わせ（Windows デュアルブート）
@@ -46,7 +48,7 @@ busctl call org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login
 
 `/etc/systemd/logind.conf` を直接編集せず、ドロップインファイルを作成する（`logind.conf` より優先される）。
 
-`/etc/systemd/logind.conf.d/power-key.conf`
+`/etc/systemd/logind.conf.d/power-key.conf`（[src/systemd/power-key.conf](src/systemd/power-key.conf)）
 
 ```ini
 [Login]
@@ -58,7 +60,7 @@ HandleLidSwitchExternalPower=suspend-then-hibernate
 
 サスペンドからハイバネートに移行するまでの時間を設定する。
 
-`/etc/systemd/sleep.conf.d/hibernate-delay.conf`
+`/etc/systemd/sleep.conf.d/hibernate-delay.conf`（[src/systemd/hibernate-delay.conf](src/systemd/hibernate-delay.conf)）
 
 ```ini
 [Sleep]
@@ -96,11 +98,12 @@ brightnessctl s 30%
 
 ```bash
 yay -S fprintd
-systemctl enable fprintd
 
 # 指紋登録
 fprintd-enroll
 ```
+
+> fprintd は必要なときに自動で起動するため、`systemctl enable` は不要（できない）。
 
 `/etc/pam.d/system-auth` と `/etc/pam.d/login` に追記する。
 
@@ -122,13 +125,13 @@ curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | 
 
 ### zim モジュールの追加
 
-`~/.zimrc` に以下を追記する。
+`zsh-autosuggestions` と `zsh-syntax-highlighting` は zim のデフォルトの `~/.zimrc` に含まれている。`~/.zimrc` の末尾に以下を追記する。
 
 ```
-zmodule zsh-users/zsh-autosuggestions
-zmodule zsh-users/zsh-syntax-highlighting
 zmodule Aloxaf/fzf-tab
 ```
+
+> 同じモジュールを 2 回書くと二重に読み込まれるので、追記前に `grep zmodule ~/.zimrc` で確認する。
 
 ```bash
 zimfw install
@@ -141,6 +144,8 @@ zimfw install
 ```
 shell zsh
 ```
+
+> dots-hyprland をインストール・更新すると `kitty.conf` が `shell fish` に上書きされる。dots-hyprland の後に設定すること。
 
 ### starship の設定
 
@@ -297,16 +302,21 @@ fi
 
 ```bash
 yay -S --needed \
+    nemo \
     firefox zen-browser-bin google-chrome \
-    docker docker-compose visual-studio-code-bin \
-    proton-vpn-cli proton-pass \
+    docker docker-compose visual-studio-code-bin github-cli \
+    proton-vpn-cli proton-pass-bin \
     discord slack-desktop \
     vlc obs-studio
 ```
 
-### Docker グループへの追加
+### Docker の有効化
 
 ```bash
+# 最初に docker コマンドを使ったときに自動で起動する
+sudo systemctl enable --now docker.socket
+
+# sudo なしで docker を使えるようにする（再ログイン後に反映）
 sudo usermod -aG docker $USER
 ```
 

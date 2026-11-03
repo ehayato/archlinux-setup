@@ -2,13 +2,17 @@
 
 [01_install.md](01_install.md) 完了後の追加設定。必要に応じて実施する。
 
+> Hyprland の設定は Lua 形式（`~/.config/hypr/hyprland.lua`）。自分の設定は `~/.config/hypr/custom/*.lua` に書く。`~/.config/hypr/hyprland/` 以下は dots-hyprland の更新で上書きされるので編集しない。
+>
+> `custom/` の設定ファイル一式は [src/custom/](src/custom/) にある。[../setup.sh](../setup.sh) を使うとまとめてコピーされる。
+
 ---
 
 ## 指紋ログインの設定
 
-[../../02_setup.md](../02_setup.md) で fprintd の設定を先に行う。
+[../02_setup.md](../02_setup.md) で fprintd の設定を先に行う。
 
-`/etc/pam.d/hyprlock` に追記する。
+`/etc/pam.d/hyprlock` の最初の `auth` 行の前に追記する。
 
 ```
 auth sufficient pam_fprintd.so
@@ -18,29 +22,37 @@ auth sufficient pam_fprintd.so
 
 ## 日本語環境
 
-fcitx5 の自動起動を設定する。`~/.config/hypr/hyprland.conf` に追記する。
+### fcitx5 の自動起動
 
-```
-exec-once = fcitx5 -d
+`~/.config/hypr/custom/execs.lua` に追記する。
+
+```lua
+hl.on("hyprland.start", function ()
+    hl.exec_cmd("fcitx5 -d")
+end)
 ```
 
-日本語キーボードの設定。`~/.config/hypr/hyprland/general.conf` の `input` セクションを編集する。
+### 日本語キーボード
 
-```
-input {
-    kb_layout = jp
-    numlock_by_default = false
-}
+`~/.config/hypr/custom/general.lua` に追記する。`hyprland/general.lua` の `input` の設定のうち、ここに書いた項目だけが上書きされる。
+
+```lua
+hl.config({
+    input = {
+        kb_layout = "jp",
+        numlock_by_default = false,
+    },
+})
 ```
 
 ### fcitx5 環境変数
 
-`~/.config/hypr/custom/env.conf` の以下の行をアンコメントする。
+`~/.config/hypr/custom/env.lua` に追記する。
 
-```ini
-env = QT_IM_MODULE, fcitx
-env = XMODIFIERS, @im=fcitx
-env = SDL_IM_MODULE, fcitx
+```lua
+hl.env("QT_IM_MODULE", "fcitx")
+hl.env("XMODIFIERS", "@im=fcitx")
+hl.env("SDL_IM_MODULE", "fcitx")
 ```
 
 ### 起動時に IME をオフにする
@@ -53,7 +65,7 @@ env = SDL_IM_MODULE, fcitx
 pkill -x fcitx5
 ```
 
-`~/.config/fcitx5/profile` を編集する。
+`~/.config/fcitx5/profile` を編集する（[../src/fcitx5/profile](../src/fcitx5/profile)）。
 
 ```ini
 [Groups/0]
@@ -107,82 +119,125 @@ setsid -f fcitx5 -d
 
 ---
 
-## Wayland 環境変数
+## その他の環境変数
 
-xdg-desktop-portal や各アプリに Wayland セッション情報を正しく伝えるための設定。
+`~/.config/hypr/custom/env.lua` に追記する。
 
-`~/.config/hypr/custom/env.conf` に追記する。
+```lua
+-- エディタ
+hl.env("EDITOR", "vim")
 
-```ini
-env = XDG_CURRENT_DESKTOP, Hyprland
-env = XDG_SESSION_DESKTOP, Hyprland
-env = XDG_SESSION_TYPE, wayland
+-- カーソル
+hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
+hl.env("XCURSOR_SIZE", "24")
+
+-- Wayland セッション情報（xdg-desktop-portal や各アプリに伝える）
+hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
+hl.env("XDG_SESSION_DESKTOP", "Hyprland")
+hl.env("XDG_SESSION_TYPE", "wayland")
 ```
 
-`~/.config/hypr/custom/execs.conf` に追記する。
+`~/.config/hypr/custom/execs.lua` の `hl.on("hyprland.start", ...)` の中に追記する。
 
-```ini
-exec-once = dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+```lua
+hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE DISPLAY")
+hl.exec_cmd("systemctl --user start hyprland-session.target")
 ```
 
-> ⚠️ `hyprctl reload` では反映されない。システム再起動が必要。
+> ⚠️ 環境変数は `hyprctl reload` では反映されない。再ログインが必要。
 
 ---
 
 ## xdg-desktop-portal の設定
 
-画面共有などのポータル機能を Hyprland に紐付ける設定。
-
-```bash
-mkdir -p ~/.config/xdg-desktop-portal
-```
-
-`~/.config/xdg-desktop-portal/portals.conf` を作成する。
+画面共有などのポータル機能を Hyprland に紐付ける設定。dots-hyprland が `~/.config/xdg-desktop-portal/hyprland-portals.conf` を配置するため、追加の作業は不要。
 
 ```ini
 [preferred]
-default=hyprland;gtk
+default = hyprland;gtk
+org.freedesktop.impl.portal.FileChooser = kde
+```
+
+---
+
+## デフォルトのファイルマネージャー（nemo）
+
+`~/.config/hypr/custom/variables.lua` に追記する（`Super+E` で起動するアプリ）。
+
+```lua
+fileManager = "nemo"
+```
+
+フォルダを開くアプリも nemo にする。
+
+```bash
+xdg-mime default nemo.desktop inode/directory
 ```
 
 ---
 
 ## ウィンドウルール
 
-`~/.config/hypr/custom/rules.conf` に追記する。
+`~/.config/hypr/custom/rules.lua` に追記する。
 
+```lua
+-- Discord・Slack をスペシャルワークスペースに配置
+hl.window_rule({match = {class = "discord" }, workspace = "special:discord"})
+hl.window_rule({match = {class = "slack" },   workspace = "special:slack"})
+
+-- ピクチャーインピクチャーを右下に配置
+hl.window_rule({match = {title = "ピクチャーインピクチャー" }, float = true})
+hl.window_rule({match = {title = "ピクチャーインピクチャー" }, pin = true})
+hl.window_rule({match = {title = "ピクチャーインピクチャー" }, size = {"(monitor_w*0.2)", "(monitor_h*0.2)"}})
+hl.window_rule({match = {title = "ピクチャーインピクチャー" }, move = {"(monitor_w*0.75)", "(monitor_h*0.75)"}})
+
+-- ダイアログの自動フロート
+hl.window_rule({match = {class = "org.kde.ark" }, float = true})
+
+-- ピン留めされたウィンドウの枠線（桜色）
+hl.window_rule({match = {pin = 1 }, border_color = "rgb(FFB7C5)"})
+hl.window_rule({match = {pin = 1 }, border_size = 2})
+
+-- Zoom をフロートにし、最大化・全画面を無効化
+hl.window_rule({match = {class = "^(zoom)$" }, float = true})
+hl.window_rule({match = {class = "^(zoom)$" }, suppress_event = "maximize fullscreen"})
 ```
-# Discord・Slack をスペシャルワークスペースに配置
-windowrule = match:class discord, workspace special:discord
-windowrule = match:class slack, workspace special:slack
 
-# ピクチャーインピクチャーを右下に配置
-windowrule = match:title ピクチャーインピクチャー, float on
-windowrule = match:title ピクチャーインピクチャー, pin on
-windowrule = match:title ピクチャーインピクチャー, size 20% 20%
-windowrule = match:title ピクチャーインピクチャー, move 1250 800
+---
 
-# ダイアログの自動フロート
-windowrule = match:class org.kde.ark, float on
+## キーバインド
 
-# ピン留めされたウィンドウの枠線（桜色）
-windowrule = match:pin 1, border_color rgb(FFB7C5)
-windowrule = match:pin 1, border_size 2
+`~/.config/hypr/custom/keybinds.lua` に追記する。主な部分のみ抜粋。全体は [src/custom/keybinds.lua](src/custom/keybinds.lua) を参照。
+
+```lua
+-- ブラウザ（デフォルトのサイドバー表示を置き換え）
+hl.unbind("SUPER + B")
+hl.bind("SUPER + B", hl.dsp.exec_cmd("~/.config/hypr/hyprland/scripts/launch_first_available.sh \"zen-browser\" \"firefox\" \"google-chrome-stable\""), { description = "Browser" })
+
+-- ProtonVPN 接続
+hl.bind("SUPER + SHIFT + V", hl.dsp.exec_cmd([[bash -c 'result=$(protonvpn connect | grep -oP "[\w ]+(?=\.)" | head -1); notify-send --app-name="ProtonVPN" "ProtonVPN" "$resultサーバーに接続しました。";']]), { description = "ProtonVPN connect" })
+
+-- スペシャルワークスペースの切り替え
+hl.bind("SUPER + SHIFT + D", hl.dsp.workspace.toggle_special("discord"), { description = "Toggle Discord workspace" })
+hl.unbind("SUPER + SHIFT + S") -- デフォルトの範囲スクリーンショットは Shift+Print に移動
+hl.bind("SUPER + SHIFT + S", hl.dsp.workspace.toggle_special("slack"), { description = "Toggle Slack workspace" })
+
+-- 範囲スクリーンショット
+hl.bind("SHIFT + Print", hl.dsp.global("quickshell:regionScreenshot"), { description = "Utilities: Screen snip" })
+
+-- フローティングトグル
+hl.bind("SUPER + Space", hl.dsp.window.float({ action = "toggle" }), { description = "Toggle floating for the focused window" })
 ```
 
-`~/.config/hypr/custom/keybinds.conf` に追記する。
-
-```
-# ProtonVPN 接続
-bind = Super+Shift, V, exec, bash -c 'result=$(protonvpn connect | grep -oP "[\w ]+(?=\.)" | head -1); notify-send --app-name="ProtonVPN" "ProtonVPN" "$resultサーバーに接続しました。";'
-
-# スペシャルワークスペースの切り替え
-bind = Super+Shift, D, togglespecialworkspace, discord
-bind = Super+Shift, S, togglespecialworkspace, slack
-
-# フローティングトグル
-bind = SUPER, space, togglefloating
-
-```
+| キー | 動作 |
+|---|---|
+| `Super+B` | ブラウザ |
+| `Super+E` | ファイルマネージャー（nemo） |
+| `Super+Shift+V` | ProtonVPN 接続 |
+| `Super+Shift+D` | Discord ワークスペース |
+| `Super+Shift+S` | Slack ワークスペース |
+| `Shift+Print` | 範囲スクリーンショット |
+| `Super+Space` | フローティング切り替え |
 
 ---
 
@@ -197,6 +252,7 @@ bind = SUPER, space, togglefloating
             visible: root.showDate
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.colors.colOnLayer1
+-           text: DateTime.longDate
 +           text: Qt.locale("ja_JP").toString(DateTime.clock.date, "MM/dd(ddd)")
         }
 ```
@@ -206,10 +262,9 @@ bind = SUPER, space, togglefloating
 ```diff
 StyledPopup {
     id: root
+-   property string formattedDate: Qt.locale().toString(DateTime.clock.date, "dddd, MMMM dd, yyyy")
 +   property string formattedDate: Qt.locale("ja_JP").toString(DateTime.clock.date, "yyyy/MM/dd (ddd)")
     property string formattedTime: DateTime.time
-
-    # 以下省略
 ```
 
 ---
@@ -257,12 +312,16 @@ Loader {
 
 ---
 
-## ロック画面の日付表記の変更
+## ロック画面などの日付表記の変更
 
-`~/.config/illogical-impulse/config.json` の該当行を確認して変更する。
+`~/.config/illogical-impulse/config.json` の `time` を編集する。
 
-```bash
-cat ~/.config/illogical-impulse/config.json | grep -i date
+```json
+"time": {
+    "dateFormat": "yyyy/MM/dd (ddd)",
+    "dateWithYearFormat": "yyyy/MM/dd",
+    "shortDateFormat": "MM/dd"
+}
 ```
 
 ---
