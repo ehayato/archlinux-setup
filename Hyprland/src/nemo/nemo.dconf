@@ -1,0 +1,28 @@
+# nemo preferences: dconf load / < nemo.dconf
+[org/nemo/preferences]
+date-format='iso'
+default-folder-viewer='list-view'
+inherit-folder-viewer=false
+inherit-show-thumbnails=false
+show-computer-icon-toolbar=true
+show-hidden-files=true
+show-home-icon-toolbar=true
+show-location-entry=true
+show-new-folder-icon-toolbar=true
+show-open-in-terminal-toolbar=true
+show-previous-icon-toolbar=true
+show-reload-icon-toolbar=true
+show-show-thumbnails-toolbar=true
+show-toggle-extra-pane-toolbar=true
+show-up-icon-toolbar=true
+
+[org/nemo/icon-view]
+labels-beside-icons=true
+
+[org/nemo/window-state]
+side-pane-view='tree'
+start-with-sidebar=true
+
+# Terminal for "Open in Terminal"
+[org/cinnamon/desktop/default-applications/terminal]
+exec='kitty'

@@ -174,6 +174,37 @@ fileManager = "nemo"
 xdg-mime default nemo.desktop inode/directory
 ```
 
+### nemo の表示設定
+
+nemo の設定は dconf に保存される。[src/nemo/nemo.dconf](src/nemo/nemo.dconf) を読み込む。
+
+```bash
+dconf load / < Hyprland/src/nemo/nemo.dconf
+```
+
+| 設定 | 値 | 内容 |
+|---|---|---|
+| `show-hidden-files` | `true` | 隠しファイル（`.` で始まるファイル）を表示 |
+| `default-folder-viewer` | `'list-view'` | リスト表示をデフォルトにする |
+| `inherit-folder-viewer` | `false` | 親フォルダの表示方法を引き継がない |
+| `inherit-show-thumbnails` | `false` | 親フォルダのサムネイル表示設定を引き継がない |
+| `date-format` | `'iso'` | 日付を `2026-11-04 09:00` 形式で表示 |
+| `show-location-entry` | `true` | パスを文字で表示（パンくずリストではなく） |
+| `show-*-toolbar` | `true` | ツールバーにボタンを表示（戻る、上へ、再読み込み、ホーム、コンピューター、新規フォルダ、端末で開く、サムネイル切り替え、2 画面切り替え） |
+| `labels-beside-icons` | `true` | アイコン表示のとき、名前をアイコンの横に表示 |
+| `side-pane-view` | `'tree'` | サイドバーをツリー表示にする |
+| `start-with-sidebar` | `true` | サイドバーを表示して起動 |
+
+### 「端末で開く」の端末
+
+nemo の「端末で開く」は、デフォルトでは `gnome-terminal` を起動する。インストールしていないと何も起きないので、kitty に変更する（`nemo.dconf` にも含まれている）。
+
+```bash
+gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty
+```
+
+> 設定を変更したら `dconf dump /org/nemo/` で確認し、`nemo.dconf` にも反映しておく。
+
 ---
 
 ## ウィンドウルール

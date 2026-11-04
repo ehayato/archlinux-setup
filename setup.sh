@@ -314,6 +314,9 @@ step_hyprland() {
     log "hyprland: default file manager (nemo)"
     xdg-mime default nemo.desktop inode/directory
     info "inode/directory -> $(xdg-mime query default inode/directory)"
+    # Same values on every run, so loading again changes nothing
+    dconf load / <"$REPO_DIR/Hyprland/src/nemo/nemo.dconf"
+    info "loaded: nemo preferences (Hyprland/src/nemo/nemo.dconf)"
 
     local qs=$HOME/.config/quickshell/ii
     if [[ -d $qs ]]; then

@@ -50,7 +50,7 @@ cd archlinux-setup
 | `system` | RTC、電源ボタン・蓋の動作、指紋認証（PAM）、Docker、PipeWire、ProtonVPN |
 | `shell` | zsh・zim・starship、tty の文字化け対策、kitty のシェル、VS Code ターミナルのフォント |
 | `fcitx5` | 起動時に IME オフ、変換・無変換で IME オン/オフ |
-| `hyprland` | `custom/*.lua`、ロック画面の指紋認証、nemo、Quickshell のバー、日付表記 |
+| `hyprland` | `custom/*.lua`、ロック画面の指紋認証、nemo（デフォルト化・表示設定）、Quickshell のバー、日付表記 |
 
 ```bash
 ./setup.sh                  # 全ステップを実行
