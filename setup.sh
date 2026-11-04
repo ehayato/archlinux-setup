@@ -179,7 +179,7 @@ step_shell() {
     fi
     # zsh-autosuggestions / zsh-syntax-highlighting are in zim's default .zimrc
     append_once "$HOME/.zimrc" 'zmodule Aloxaf/fzf-tab'
-    zsh "${ZIM_HOME:-$HOME/.zim}/zimfw.zsh" install >/dev/null
+    ZIM_HOME=${ZIM_HOME:-$HOME/.zim} zsh "${ZIM_HOME:-$HOME/.zim}/zimfw.zsh" install >/dev/null
 
     log "shell: starship"
     install_file "$REPO_DIR/src/starship.toml" "$HOME/.config/starship.toml"
@@ -210,6 +210,16 @@ EOF
         info "changed: shell $KITTY_SHELL"
     else
         append_once "$kitty_conf" "shell $KITTY_SHELL"
+    fi
+    # Ctrl+V paste: fish binds it itself, zsh does not
+    if grep -qE '^map ctrl\+v[[:space:]]+paste_from_clipboard$' "$kitty_conf"; then
+        info "already set: map ctrl+v paste_from_clipboard"
+    else
+        append_once "$kitty_conf" 'map ctrl+v    paste_from_clipboard'
+    fi
+    if pgrep -x kitty >/dev/null; then
+        pkill -USR1 -x kitty
+        info "reloaded: kitty config"
     fi
 
     log "shell: VS Code terminal font"
@@ -425,7 +435,10 @@ for s in "${selected[@]}"; do
     fi
 done
 
-sudo -v
+# Ask for the sudo password up front only when a step always needs it
+if printf '%s\n' "${selected[@]}" | grep -qxE 'packages|system'; then
+    sudo -v
+fi
 for s in "${selected[@]}"; do
     "step_$s"
 done

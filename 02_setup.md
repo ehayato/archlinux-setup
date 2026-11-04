@@ -145,7 +145,17 @@ zimfw install
 shell zsh
 ```
 
-> dots-hyprland をインストール・更新すると `kitty.conf` が `shell fish` に上書きされる。dots-hyprland の後に設定すること。
+`Ctrl+V` で貼り付けられるようにする。fish は自分で `Ctrl+V` を貼り付けに割り当てているが、zsh では `Ctrl+V` は貼り付けにならない（kitty 標準の貼り付けは `Ctrl+Shift+V`）。
+
+```
+map ctrl+v    paste_from_clipboard
+```
+
+編集後は `Ctrl+Shift+F5` で設定を再読み込みする。
+
+> dots-hyprland をインストール・更新すると `kitty.conf` が上書きされ、`shell fish` に戻り、`Ctrl+V` の割り当ても消える。dots-hyprland の後に設定すること。
+>
+> kitty の中で動かすアプリ（vim の矩形選択など）でも `Ctrl+V` が貼り付けになる。
 
 ### starship の設定
 
