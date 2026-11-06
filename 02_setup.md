@@ -292,6 +292,63 @@ tty は Nerd Font のアイコンや絵文字を表示できない。この設�
 
 ---
 
+## 日本語フォントの優先設定
+
+`noto-fonts-cjk` には日本語・韓国語・中国語（簡体字・繁体字・香港）の 5 種類が入っているが、優先順位の設定がないため、日本語の文字に韓国語版（Noto Sans CJK KR）が使われる。一部の漢字（「直」「骨」「刃」など）が日本の字形と違う形になる。
+
+`LANG` が `en_US.UTF-8` だと言語からも日本語版が選ばれないので、`LANG` を変えずに fontconfig で日本語版を優先する。
+
+`~/.config/fontconfig/fonts.conf`（[src/fontconfig/fonts.conf](src/fontconfig/fonts.conf)）
+
+```xml
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+<fontconfig>
+  <!-- Disable subpixel rendering -->
+  <match target="font">
+    <edit name="rgba" mode="assign">
+      <const>none</const>
+    </edit>
+  </match>
+
+  <!-- Prefer Japanese glyphs for CJK (Latin stays Noto Sans/Serif/Mono) -->
+  <alias>
+    <family>sans-serif</family>
+    <prefer>
+      <family>Noto Sans</family>
+      <family>Noto Sans CJK JP</family>
+    </prefer>
+  </alias>
+  <alias>
+    <family>serif</family>
+    <prefer>
+      <family>Noto Serif</family>
+      <family>Noto Serif CJK JP</family>
+    </prefer>
+  </alias>
+  <alias>
+    <family>monospace</family>
+    <prefer>
+      <family>Noto Sans Mono</family>
+      <family>Noto Sans Mono CJK JP</family>
+    </prefer>
+  </alias>
+</fontconfig>
+```
+
+- 英字は今まで通り Noto Sans / Noto Serif / Noto Sans Mono で表示し、それらにない日本語の文字だけ CJK JP で表示する
+- CJK JP を先頭にすると、英字まで CJK JP のフォントで表示されてしまう
+
+キャッシュを更新して確認する（アプリは再起動すると反映される）。
+
+```bash
+fc-cache -f
+fc-match "sans-serif:lang=ja"        # "Noto Sans CJK JP" ならOK
+fc-match "monospace:charset=3042"    # 「あ」を表示するフォント。"Noto Sans Mono CJK JP" ならOK
+```
+
+---
+
 ## tty の文字化け対策
 
 tty（Linux コンソール）は日本語グリフを表示できないため、tty のときだけ英語ロケールにする。`~/.zshrc` に追記する。

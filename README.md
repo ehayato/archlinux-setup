@@ -15,7 +15,7 @@ archlinux-setup/
 │   ├── 01_install.md    # Hyprland インストール手順
 │   ├── 02_setup.md      # Hyprland 追加セットアップ
 │   └── src/             # 設定ファイル（custom/*.lua、Quickshell の QML）
-└── src/                 # 設定ファイル（starship、fcitx5、systemd など）
+└── src/                 # 設定ファイル（starship、fcitx5、fontconfig、systemd など）
 ```
 
 ---
@@ -48,7 +48,7 @@ cd archlinux-setup
 |---|---|
 | `packages` | yay、マイクロコード、アプリのインストール |
 | `system` | RTC、電源ボタン・蓋の動作、指紋認証（PAM）、Docker、PipeWire、ProtonVPN |
-| `shell` | zsh・zim・starship、tty の文字化け対策、kitty のシェル、VS Code ターミナルのフォント |
+| `shell` | zsh・zim・starship、tty の文字化け対策、kitty のシェル、VS Code ターミナルのフォント、日本語フォントの優先設定 |
 | `fcitx5` | 起動時に IME オフ、変換・無変換で IME オン/オフ |
 | `hyprland` | `custom/*.lua`、ロック画面の指紋認証、nemo（デフォルト化・表示設定）、Quickshell のバー、日付表記 |
 

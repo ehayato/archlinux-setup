@@ -146,6 +146,25 @@ hl.exec_cmd("systemctl --user start hyprland-session.target")
 
 > ⚠️ 環境変数は `hyprctl reload` では反映されない。再ログインが必要。
 
+### tty 用の英語ロケールを引き継がない
+
+ディスプレイマネージャーを使わずに tty から Hyprland を起動すると、`~/.zshrc` の tty 用設定（[02_setup.md](../02_setup.md) の「tty の文字化け対策」）で付けた `LC_ALL=en_US.UTF-8` が Hyprland と全アプリに引き継がれる。`LC_ALL` は `LC_CTYPE` や `LC_TIME` などをすべて上書きするため、Quickshell の通知などで漢字が日本語の字形にならない（fontconfig・Qt が日本語向けのフォントを選ばない）。
+
+`~/.config/hypr/custom/env.lua` に追記して、Hyprland 内では `LC_ALL` を空にする（空の `LC_ALL` は未設定と同じ扱いになる）。
+
+```lua
+-- Locale
+-- Hyprland is started from tty, where ~/.zshrc sets LC_ALL=en_US.UTF-8.
+-- Clear it so apps follow LANG / LC_* (Japanese LC_CTYPE, LC_TIME, ...).
+hl.env("LC_ALL", "")
+```
+
+確認する（`LC_ALL=` が空なら OK）。
+
+```bash
+tr '\0' '\n' </proc/$(pgrep -x qs)/environ | grep -E '^(LC_ALL|LC_CTYPE)='
+```
+
 ---
 
 ## xdg-desktop-portal の設定

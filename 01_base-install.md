@@ -388,6 +388,8 @@ pacman -S noto-fonts-cjk noto-fonts-emoji ttf-jetbrains-mono-nerd
 pacman -S fcitx5 fcitx5-mozc fcitx5-gtk fcitx5-qt fcitx5-configtool
 ```
 
+> このままだと漢字が韓国語版（Noto Sans CJK KR）の字形で表示される。日本語版を優先する設定は [02_setup.md](02_setup.md) の「日本語フォントの優先設定」を参照。
+
 `/etc/environment` に追記する。
 
 ```

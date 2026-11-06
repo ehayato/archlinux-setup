@@ -243,6 +243,10 @@ else:
     json.dump(settings, open(path, "w"), indent=4, ensure_ascii=False)
     print(f"    set: {key}")
 EOF
+
+    log "shell: fontconfig (prefer Noto CJK JP)"
+    install_file "$REPO_DIR/src/fontconfig/fonts.conf" "$HOME/.config/fontconfig/fonts.conf"
+    fc-cache -f >/dev/null
 }
 
 step_fcitx5() {

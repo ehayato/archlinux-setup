@@ -19,3 +19,8 @@ hl.env("XCURSOR_SIZE", "24")
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_TYPE", "wayland")
+
+-- Locale
+-- Hyprland is started from tty, where ~/.zshrc sets LC_ALL=en_US.UTF-8.
+-- Clear it so apps follow LANG / LC_* (Japanese LC_CTYPE, LC_TIME, ...).
+hl.env("LC_ALL", "")
